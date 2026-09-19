@@ -25,7 +25,7 @@ class Config:
 
 def load_config() -> Config:
     return Config(
-        backend_url=os.environ.get("BACKEND_URL", "http://localhost:4000"),
+        backend_url=os.environ.get("BACKEND_URL", "http://localhost:3000"),
         internal_api_key=_require("INTERNAL_API_KEY"),
         openai_api_key=_require("OPENAI_API_KEY"),
         openai_model=os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),

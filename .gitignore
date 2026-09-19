@@ -1,10 +1,28 @@
+# dependencies
 node_modules/
-dist/
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+/build
+
+# env files — секреты живут только в Vercel / локальном .env.local
 .env
-*.env
+.env.*
 !.env.example
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+.claude/
+
+# python parser
 __pycache__/
 *.pyc
 fb_storage_state.json
-.claude/
-.next/

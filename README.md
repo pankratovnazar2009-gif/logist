@@ -1,93 +1,65 @@
 # Logist Matchmaker — MVP
 
-Веб-маршрутизатор заявок для польского рынка TSL: логисты выкладывают грузы, перевозчики
-получают SMS о подходящих грузах (по направлению и типу кузова), пока база логистов пустая —
-грузы подтягиваются парсером из открытых FB-групп.
+Веб-приложение (PWA) для польского рынка TSL: логисты выставляют грузы, перевозчики получают SMS о подходящих
+(по направлению и типу кузова). Пока база пуста — грузы подтягивает парсер из открытых FB-групп.
 
-Это переход от прежнего Telegram-бота (n8n) к отдельному веб-приложению. n8n-воркфлоу
-("Logist Bot — ...") больше не используются этим проектом и сейчас на паузе — можно
-включить обратно из n8n, если понадобятся для сравнения, либо архивировать позже.
-
-## Структура
+**Одно приложение = один проект Vercel.** Интерфейс и API — один Next.js в корне репозитория:
 
 ```
-supabase/migrations/0001_init.sql   — схема БД (Postgres/Supabase)
-backend/                            — Node.js/Express/TypeScript API
-parser/                             — Python-скрипт: FB-группы → LLM → backend
+src/app/            — страницы (login, onboarding, loads, loads/[id], loads/new) + PWA-манифест
+src/app/api/        — API (route handlers): вход по SMS, профиль, GUS/NIP, грузы, внутренние вызовы парсера
+src/lib/server/     — серверная логика: Supabase, SMS (SMSAPI.pl/Twilio), GUS, матчинг
+supabase/migrations — схема БД
+parser/             — Python-парсер FB-групп (запускается ОТДЕЛЬНО, не на Vercel — см. ниже)
 ```
 
-Фронтенда (PWA) в этой итерации ещё нет — сначала база + backend, по твоим словам это
-приоритет. React/Next.js PWA — следующий шаг.
+## Деплой на Vercel
 
-## Что нужно завести самому (я этого сделать не могу — сторонние аккаунты/оплата)
+1. Vercel → **Add New… → Project** → выбери этот репозиторий. Framework определится сам (Next.js),
+   Root Directory оставь пустым. Build/Output настройки не трогай.
+2. До нажатия Deploy добавь **Environment Variables** (список в [.env.example](.env.example)). Обязательные:
+   - `SUPABASE_URL` — Project URL из Supabase (без `/rest/v1/`)
+   - `SUPABASE_SERVICE_ROLE_KEY` — Secret key (`sb_secret_...`)
+   - `APP_JWT_SECRET` — любая длинная случайная строка (≥ 16 символов)
+   - `INTERNAL_API_KEY` — любая случайная строка, тот же секрет пойдёт в парсер
+   - `SMSAPI_TOKEN` — токен SMSAPI.pl (или `SMS_PROVIDER=twilio` + `TWILIO_*`)
+   - `GUS_ENV` = `test` (пока нет своего ключа GUS) или `prod` + `GUS_API_KEY`
+3. Deploy. `APP_BASE_URL` задавать не нужно — ссылки в SMS берутся из домена Vercel (если подключишь
+   свой домен, задай `APP_BASE_URL=https://твой-домен`).
+4. Миграцию БД один раз прогони в Supabase → SQL Editor: [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql).
 
-1. **Supabase-проект** — https://supabase.com → New project → скопировать `Project URL`
-   и `service_role` key (Settings → API) в `backend/.env`.
-   Прогнать миграцию: в Supabase Dashboard → SQL Editor → вставить содержимое
-   `supabase/migrations/0001_init.sql` → Run.
-2. **SMS**: SMSAPI.pl (https://ssl.smsapi.pl, токен в панели: OAuth/Tokeny) — приоритетно
-   для польского b2b-трафика; либо Twilio, если проще стартовать. Переключается одной
-   переменной `SMS_PROVIDER` в `backend/.env`.
-3. **GUS/REGON API-ключ** (бесплатно) — https://api.stat.gov.pl/Home/RegonApi. До получения
-   своего ключа стоит публичный тестовый (`GUS_ENV=test`), но тестовая среда отдаёт только
-   фиктивные тестовые фирмы — для реальных НИПов нужен `GUS_ENV=prod` + свой ключ.
-4. **OpenAI API key** — https://platform.openai.com/api-keys, для `parser/.env`.
-5. **Python 3.10+** — на этой машине сейчас не установлен (только заглушка Microsoft Store).
-   Поставь с https://python.org, если будешь запускать парсер локально; либо парсер можно
-   гонять на отдельном сервере/VPS (как и планировалось изначально).
-
-## Backend — запуск
+## Локальный запуск
 
 ```bash
-cd backend
 npm install
-copy .env.example .env    # затем вписать реальные ключи
-npm run dev
+copy .env.example .env.local    # впиши реальные значения
+npm run dev                     # http://localhost:3000
 ```
 
-Проверить: `GET http://localhost:4000/health` → `{ "ok": true }`.
+## Парсер FB-групп (`parser/`)
 
-Уже реализовано (`backend/src`):
-- `POST /api/auth/otp/request`, `POST /api/auth/otp/verify` — вход по SMS-коду.
-- `POST /api/auth/google` — вход логиста через Google (принимает Supabase Auth access token
-  с фронта; сам OAuth-флоу — фронтендная часть, ещё не сделана).
-- `POST /api/users/me/profile` — выбор роли + профиль; для логиста с `nip` — автоподтяжка
-  `company_name` из GUS.
-- `GET /api/nip/:nip` — предпросмотр данных фирмы по НИП до сохранения.
-- `POST /api/loads`, `GET /api/loads/:id` — грузы, добавленные логистом напрямую в приложении.
-- `POST /api/internal/loads`, `GET /api/internal/fb-groups` — внутренние эндпоинты для
-  Python-парсера (защищены `x-internal-key`, не пользовательским JWT).
-- Матчинг (`services/matching.ts`) — при появлении нового груза ищет перевозчиков с
-  пересекающимися `preferred_routes`/`truck_types` и шлёт им SMS со ссылкой на груз;
-  дедуплицируется через `notifications_log`, чтобы не слать повторно.
-
-`npx tsc --noEmit` уже прогнан — компилируется чисто.
-
-## Parser — запуск
+Python + Playwright + OpenAI. На Vercel он **не запускается** (долгоживущий процесс с браузером и живой
+сессией Facebook) — гоняй его на своём ПК или дешёвом VPS. Он ходит в API задеплоенного приложения:
+в `parser/.env` укажи `BACKEND_URL=https://<твой-проект>.vercel.app` и тот же `INTERNAL_API_KEY`.
 
 ```bash
 cd parser
-pip install -r requirements.txt
-playwright install chromium
-copy .env.example .env    # вписать ключи; INTERNAL_API_KEY должен совпадать с backend/.env
-python save_session.py    # один раз: руками логинишься в FB, сессия сохраняется в файл
-python main.py            # дальше работает в цикле само, по расписанию POLL_INTERVAL_SECONDS
+pip install -r requirements.txt && playwright install chromium
+copy .env.example .env
+python save_session.py    # один раз: логинишься в FB руками, сессия сохраняется в файл
+python main.py
 ```
 
-Важный принцип, перенесённый из прошлой итерации на n8n: **скрипт никогда сам не проходит
-логин/капчу/checkpoint Facebook**. Сессия логинится один раз руками через `save_session.py`;
-если Facebook посреди работы потребует повторную проверку — `fb_scraper.py` останавливается
-и печатает предупреждение вместо попытки обойти проверку.
+Скрипт никогда сам не проходит логин/капчу/checkpoint Facebook — при проверке он останавливается.
+Список групп лежит в таблице `fb_groups` (сейчас пустая — нужно занести стартовый список).
 
-## Дальше по плану (не сделано в этой итерации)
+## Что уже проверено вживую
 
-- Frontend PWA (React/Next.js): онбординг (выбор роли, форма профиля, ввод НИП с live-превью
-  через `GET /api/nip/:nip`), лента грузов для перевозчика, страница груза `/loads/:id` (то,
-  куда ведёт ссылка из SMS), форма добавления груза для логиста.
-- Список `fb_groups` в БД сейчас пустой — нужно занести стартовый список групп (можно взять
-  из старого [logist-bot-spec.md](logist-bot-spec.md), там уже 19 URL).
-- Пока нет автоматического "протухания" статуса `loads.status = 'expired'` — таблица уже
-  готова (`expires_at`), не хватает крон-джобы/функции, которая её проставляет.
-- Уточнить у GUS API реальный формат ответа на своём ключе (`backend/src/services/gus.ts`
-  написан по официальной документации BIR1.1, но SOAP-ответы стоит свериться на реальном
-  тестовом вызове — тестовая среда возвращает вымышленные компании, не настоящие НИПы).
+Вход по SMS (реальная доставка), GUS-поиск по NIP (тестовый контур), создание грузов, лента, карточка
+груза, фильтрация «перевозчик ↔ груз», PWA (манифест + service worker).
+
+## Не сделано
+
+- Вход через Google (маршрут `/api/auth/google` есть, кнопки во фронтенде нет).
+- Автоматическое «протухание» грузов (`loads.status = 'expired'`; поле `expires_at` уже есть).
+- Заполнение `fb_groups` и запуск парсера в продакшене.
