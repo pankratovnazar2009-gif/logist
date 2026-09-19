@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#1d4fd6"/>
+  <g fill="#ffffff">
+    <!-- cargo box -->
+    <rect x="96" y="176" width="200" height="140" rx="10"/>
+    <!-- cab -->
+    <path d="M296 220 h72 l48 56 v40 h-120 z" />
+    <!-- windshield cut-out -->
+    <path d="M320 236 h40 l28 32 h-68 z" fill="#1d4fd6"/>
+    <!-- wheels -->
+    <circle cx="176" cy="336" r="34"/>
+    <circle cx="176" cy="336" r="14" fill="#1d4fd6"/>
+    <circle cx="356" cy="336" r="34"/>
+    <circle cx="356" cy="336" r="14" fill="#1d4fd6"/>
+  </g>
+</svg>
