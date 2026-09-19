@@ -24,7 +24,11 @@ let cached: Env | null = null;
 /** Валидируется лениво, при первом обращении — чтобы сборка не падала, пока переменные не заданы. */
 export function getEnv(): Env {
   if (cached) return cached;
-  const parsed = envSchema.safeParse(process.env);
+  // Пустые переменные (частая ошибка при вводе в дашборде) считаем незаданными, значения — обрезаем.
+  const cleaned = Object.fromEntries(
+    Object.entries(process.env).map(([key, value]) => [key, value?.trim() ? value.trim() : undefined]),
+  );
+  const parsed = envSchema.safeParse(cleaned);
   if (!parsed.success) {
     throw new Error(`Invalid environment configuration: ${JSON.stringify(parsed.error.flatten().fieldErrors)}`);
   }
