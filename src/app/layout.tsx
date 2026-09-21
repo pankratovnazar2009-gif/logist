@@ -8,9 +8,9 @@ const manrope = Manrope({ subsets: ["latin", "latin-ext"], variable: "--font-man
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains-mono" });
 
 export const metadata: Metadata = {
-  title: "Logist Matchmaker",
+  title: "Pozna.logist",
   description: "Ładunki i przewoźnicy — dopasowanie w czasie rzeczywistym",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "Logist" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Pozna.logist" },
   icons: {
     icon: [
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },

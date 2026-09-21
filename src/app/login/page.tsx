@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { homePath } from "@/lib/routes";
+import { Wordmark } from "@/components/wordmark";
 
 type Step = "phone" | "code";
 
@@ -55,8 +56,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="font-[family-name:var(--font-display)] text-3xl font-extrabold tracking-tight mb-1">
-          Logist<span style={{ color: "var(--color-accent)" }}>.</span>
+        <h1 className="text-3xl mb-1">
+          <Wordmark />
         </h1>
         <p className="text-[var(--color-text-muted)] mb-8">Zaloguj się kodem SMS</p>
 
@@ -97,6 +98,7 @@ export default function LoginPage() {
                 id="code"
                 className="input mono text-center text-xl tracking-[0.3em]"
                 inputMode="numeric"
+                autoComplete="one-time-code"
                 maxLength={6}
                 placeholder="••••••"
                 value={code}

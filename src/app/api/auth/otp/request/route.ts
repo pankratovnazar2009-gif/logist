@@ -1,6 +1,7 @@
 import { randomInt } from "crypto";
 import { z } from "zod";
 import { db } from "@/lib/server/db";
+import { appBaseUrl } from "@/lib/server/env";
 import { json } from "@/lib/server/http";
 import { sendSms } from "@/lib/server/sms";
 
@@ -40,7 +41,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    await sendSms(phone, `Twój kod logowania: ${code} (ważny 5 minut)`);
+    // Последняя строка «@домен #код» — формат WebOTP: Chrome на Android подставит код в поле сам.
+    const host = new URL(appBaseUrl()).host;
+    await sendSms(phone, `Pozna.logist: Twój kod logowania ${code}. Ważny 5 minut. Nie podawaj go nikomu.\n\n@${host} #${code}`);
   } catch (err) {
     console.error("sendSms failed", err);
     return json({ error: "sms_send_failed" }, 502);

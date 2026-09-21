@@ -1,13 +1,28 @@
 import { ROUTE_OPTIONS, TRUCK_TYPES } from "@/lib/types";
 
-export function Field({ id, label, hint, children }: { id: string; label: string; hint?: string; children: React.ReactNode }) {
+interface FieldProps {
+  id: string;
+  label: string;
+  hint?: string;
+  /** Ошибка заменяет подсказку: красный текст, объявляется скринридером. */
+  error?: string | null;
+  children: React.ReactNode;
+}
+
+export function Field({ id, label, hint, error, children }: FieldProps) {
   return (
     <div>
       <label className="field-label" htmlFor={id}>
         {label}
       </label>
       {children}
-      {hint && <p className="mt-1 text-xs text-[var(--color-text-muted)]">{hint}</p>}
+      {error ? (
+        <p role="alert" className="mt-1 text-xs" style={{ color: "var(--color-danger)" }}>
+          {error}
+        </p>
+      ) : (
+        hint && <p className="mt-1 text-xs text-[var(--color-text-muted)]">{hint}</p>
+      )}
     </div>
   );
 }

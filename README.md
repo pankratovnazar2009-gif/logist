@@ -1,4 +1,4 @@
-# Logist Matchmaker
+# Pozna.logist
 
 Веб-приложение (PWA) для польского рынка TSL. Логист указывает **откуда, куда, когда и какой груз** — приложение сразу
 показывает подходящих перевозчиков: зарегистрированных в приложении и найденных в открытых FB-группах. Перевозчик
@@ -12,7 +12,7 @@ src/app/             — страницы: login, onboarding, loads, offers, mat
 src/app/api/         — API (route handlers): вход по SMS, грузы, поездки, совпадения, внутренние вызовы n8n
 src/lib/             — общие типы и правила подбора (matching-rules.ts + тесты), состояния пары (match-state.ts)
 src/lib/server/      — серверная логика: Supabase, SMS, GUS, подбор, скрытие контактов
-supabase/migrations/ — схема БД (0001_init.sql, 0002_matching.sql)
+supabase/migrations/ — схема БД (0001_init, 0002_matching, 0003_profile)
 ```
 
 ## Как работает подбор
@@ -36,7 +36,7 @@ supabase/migrations/ — схема БД (0001_init.sql, 0002_matching.sql)
    Проще всего: **Import .env** → файл `.env.vercel`.
 3. Deploy. `APP_BASE_URL` задавать не нужно — ссылки в SMS берутся из домена Vercel.
 4. Миграции БД — **по порядку**, в Supabase → SQL Editor: [0001_init.sql](supabase/migrations/0001_init.sql), затем
-   [0002_matching.sql](supabase/migrations/0002_matching.sql). Вторую нужно выполнить **до** деплоя нового кода.
+   [0002_matching.sql](supabase/migrations/0002_matching.sql), затем [0003_profile.sql](supabase/migrations/0003_profile.sql) (профиль и бакет для фото). Миграцию нужно выполнять **до** деплоя кода, который её использует.
 
 ## Локальный запуск
 

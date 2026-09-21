@@ -27,6 +27,7 @@
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 18px;
+  --radius-full: 999px;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -209,6 +210,110 @@ body {
 
   .mono {
     font-family: var(--font-mono);
+  }
+
+  /* Аватар: фото или инициалы. Круг — единственное место, где нужен полный радиус. */
+  .avatar {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border);
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    user-select: none;
+  }
+  .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  a.avatar {
+    transition: border-color var(--duration-micro) var(--ease-standard);
+  }
+  a.avatar:hover {
+    border-color: var(--color-accent);
+  }
+  a.avatar:active {
+    transform: scale(0.96);
+  }
+  a.avatar:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Переключаемая метка (язык, кузов, регион): нажата — акцентная заливка. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    padding: 6px var(--space-3);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard),
+      color var(--duration-micro) var(--ease-standard);
+  }
+  .chip:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  .chip:active {
+    transform: scale(0.97);
+  }
+  .chip:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  /* Ссылка навигации в шапке: подчёркивание растёт от края к краю на hover и у текущего раздела. */
+  .nav-link {
+    position: relative;
+    padding: var(--space-2) 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-base) var(--ease-standard);
+  }
+  .nav-link:hover,
+  .nav-link[aria-current="page"] {
+    color: var(--color-text);
+  }
+  .nav-link:hover::after,
+  .nav-link[aria-current="page"]::after {
+    transform: scaleX(1);
+  }
+  .nav-link:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 4px;
+    border-radius: var(--radius-sm);
   }
 }
 

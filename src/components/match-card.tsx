@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatDate, formatDateRange, routeText, truckLabel } from "@/lib/format";
 import type { MatchView } from "@/lib/types";
 import { MatchStateBadge, needsMyAction } from "./match-status";
+import { VerifiedBadges } from "./verified-badges";
 
 /** Строка списка: что предлагает вторая сторона (маршрут, даты, кузов) без контактов. */
 export function MatchCard({ match }: { match: MatchView }) {
@@ -30,6 +31,7 @@ export function MatchCard({ match }: { match: MatchView }) {
         {routeText(place)} · <span className="mono">{when}</span>
       </div>
       {details.length > 0 && <div className="text-sm text-[var(--color-text-muted)] mono">{details.join(" · ")}</div>}
+      <VerifiedBadges verified={counterpart.verified} />
     </Link>
   );
 }

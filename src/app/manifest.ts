@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Logist Matchmaker",
-    short_name: "Logist",
+    name: "Pozna.logist",
+    short_name: "Pozna.logist",
     description: "Ładunki i przewoźnicy — dopasowanie w czasie rzeczywistym",
     start_url: "/",
     display: "standalone",

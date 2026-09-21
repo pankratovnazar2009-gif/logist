@@ -10,6 +10,8 @@ import { useRoleGuard } from "@/lib/use-role-guard";
 import type { MatchView } from "@/lib/types";
 import { AppShell } from "@/components/app-shell";
 import { AsyncView } from "@/components/async-view";
+import { Avatar } from "@/components/avatar";
+import { VerifiedBadges } from "@/components/verified-badges";
 import { MatchActions } from "@/components/match-actions";
 import { MatchStateBadge, describeState } from "@/components/match-status";
 
@@ -41,9 +43,16 @@ function MatchDetail({ match, onRefresh }: { match: MatchView; onRefresh: () => 
     <div className="flex flex-col gap-6 max-w-2xl">
       <div className="card flex flex-col gap-4">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="font-[family-name:var(--font-display)] text-2xl font-extrabold tracking-tight">{counterpart.label}</h1>
+          <div className="flex items-center gap-3 min-w-0">
+            {counterpart.verified && <Avatar url={counterpart.person?.avatarUrl ?? null} name={counterpart.person?.name ?? counterpart.label} size={48} />}
+            <div className="min-w-0">
+              <h1 className="font-[family-name:var(--font-display)] text-2xl font-extrabold tracking-tight">{counterpart.person?.name ?? counterpart.label}</h1>
+              {counterpart.person?.name && <p className="text-sm text-[var(--color-text-muted)]">{counterpart.label}</p>}
+            </div>
+          </div>
           <MatchStateBadge state={state} viewer={viewer} />
         </div>
+        <VerifiedBadges verified={counterpart.verified} />
         <p className="text-[var(--color-text-muted)]">{describeState(state, viewer, canConnect)}</p>
         <MatchActions match={match} onChange={onRefresh} onStale={onRefresh} />
       </div>
@@ -77,7 +86,7 @@ function MatchDetail({ match, onRefresh }: { match: MatchView; onRefresh: () => 
 function ContactBlock({ match }: { match: MatchView }) {
   const { counterpart, state } = match;
   const isOpen = state.status === "confirmed" || (counterpart.source === "facebook" && state.status !== "declined" && state.status !== "closed");
-  if (!isOpen || (!counterpart.contact && !counterpart.sourceUrl)) return null;
+  if (!isOpen || (!counterpart.contact && !counterpart.sourceUrl && !counterpart.person?.email)) return null;
 
   const href = counterpart.contact ? contactHref(counterpart.contact) : null;
   return (
@@ -91,6 +100,11 @@ function ContactBlock({ match }: { match: MatchView }) {
         ) : (
           <p className="mono text-lg font-semibold break-all">{counterpart.contact}</p>
         ))}
+      {counterpart.person?.email && (
+        <a className="text-sm mono break-all" style={{ color: "var(--color-accent)" }} href={`mailto:${counterpart.person.email}`}>
+          {counterpart.person.email}
+        </a>
+      )}
       {counterpart.sourceUrl && (
         <a className="text-sm underline" style={{ color: "var(--color-accent)" }} href={counterpart.sourceUrl} target="_blank" rel="noopener noreferrer">
           Otwórz ogłoszenie na Facebooku

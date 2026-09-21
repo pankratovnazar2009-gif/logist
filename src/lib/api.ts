@@ -24,16 +24,25 @@ export class ApiError extends Error {
   }
 }
 
+/** Поля, которые можно менять в профиле; null очищает поле. */
+export interface ProfilePatch {
+  full_name?: string | null;
+  email?: string | null;
+  company_name?: string | null;
+  nip?: string | null;
+  languages?: string[];
+  truck_types?: string[];
+  preferred_routes?: string[];
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init?.headers,
-    },
-  });
+  const headers = new Headers({ "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) });
+  for (const [key, value] of Object.entries((init?.headers ?? {}) as Record<string, string | undefined>)) {
+    if (value === undefined) headers.delete(key);
+    else headers.set(key, value);
+  }
+  const res = await fetch(`${API_URL}${path}`, { ...init, headers });
 
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new ApiError(res.status, body.error ?? "unknown_error");
@@ -48,6 +57,15 @@ export const api = {
       body: JSON.stringify({ phone, code }),
     }),
   me: () => request<{ user: import("./types").AppUser }>("/api/users/me"),
+  updateProfile: (patch: ProfilePatch) =>
+    request<{ user: import("./types").AppUser }>("/api/users/me", { method: "PATCH", body: JSON.stringify(patch) }),
+  uploadAvatar: (photo: Blob) => {
+    const form = new FormData();
+    form.append("file", photo, "avatar.jpg");
+    // Content-Type не задаём: браузер сам добавит multipart-границу.
+    return request<{ user: import("./types").AppUser }>("/api/users/me/avatar", { method: "POST", body: form, headers: { "Content-Type": undefined as unknown as string } });
+  },
+  removeAvatar: () => request<{ user: import("./types").AppUser }>("/api/users/me/avatar", { method: "DELETE" }),
   saveProfile: (payload: { role: "logist" | "carrier"; nip?: string; truck_types?: string[]; preferred_routes?: string[] }) =>
     request<{ user: import("./types").AppUser }>("/api/users/me/profile", { method: "POST", body: JSON.stringify(payload) }),
   lookupNip: (nip: string) =>

@@ -13,9 +13,9 @@ export interface PendingNotification {
 }
 
 const MESSAGES: Record<NotificationKind, (route: string, url: string) => string> = {
-  match: (route, url) => `Logist: znaleziono dopasowanie (${route}). Zobacz w aplikacji: ${url}`,
-  requested: (route, url) => `Logist: ktoś chce się połączyć w sprawie ${route}. Potwierdź w aplikacji: ${url}`,
-  confirmed: (route, url) => `Logist: połączenie potwierdzone (${route}). Kontakt czeka w aplikacji: ${url}`,
+  match: (route, url) => `Pozna.logist: nowe dopasowanie (${route}). Zobacz w aplikacji: ${url}`,
+  requested: (route, url) => `Pozna.logist: ktoś chce się połączyć w sprawie ${route}. Potwierdź w aplikacji: ${url}`,
+  confirmed: (route, url) => `Pozna.logist: połączenie potwierdzone (${route}). Kontakt czeka w aplikacji: ${url}`,
 };
 
 /**

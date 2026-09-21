@@ -16,6 +16,16 @@ interface MatchRow {
 
 const SELECT = "*, load:loads(*), offer:carrier_offers(*)";
 
+interface CounterpartUser {
+  id: string;
+  phone: string | null;
+  company_name: string | null;
+  nip: string | null;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+}
+
 /** Пара, у которой груз или предложение уже недоступны, для пользователя закрыта — даже если в БД ещё «ожидает» (истечение считаем лениво). */
 function effectiveState(row: MatchRow): MatchState {
   const state = parseMatchState(row);
@@ -52,9 +62,9 @@ async function buildViews(rows: MatchRow[], userId: string, includeInactive: boo
     ...new Set(mine.flatMap(({ row, viewer }) => (viewer === "logist" ? row.offer.carrier_id : row.load.logist_id)).filter((id): id is string => Boolean(id))),
   ];
   const { data: users } = counterpartIds.length
-    ? await db().from("users").select("id, phone, company_name").in("id", counterpartIds)
+    ? await db().from("users").select("id, phone, company_name, nip, full_name, email, avatar_url").in("id", counterpartIds)
     : { data: [] };
-  const userById = new Map((users ?? []).map((u) => [u.id as string, u as { id: string; phone: string | null; company_name: string | null }]));
+  const userById = new Map((users ?? []).map((u) => [u.id as string, u as CounterpartUser]));
 
   const views = mine.map(({ row, viewer }): MatchView => {
     const state = effectiveState(row);
@@ -84,6 +94,11 @@ async function buildViews(rows: MatchRow[], userId: string, includeInactive: boo
           : counterpartUser?.company_name ?? (counterpartParty === "carrier" ? "Przewoźnik" : "Logist"),
         contact,
         sourceUrl: isFacebook ? (counterpartParty === "carrier" ? row.offer.source_url : row.load.source_url) : null,
+        person:
+          state.status === "confirmed" && counterpartUser
+            ? { name: counterpartUser.full_name, avatarUrl: counterpartUser.avatar_url, email: counterpartUser.email }
+            : null,
+        verified: counterpartUser ? { phone: Boolean(counterpartUser.phone), company: Boolean(counterpartUser.nip) } : null,
       },
       created_at: row.created_at,
     };

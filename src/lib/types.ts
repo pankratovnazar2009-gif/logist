@@ -7,10 +7,24 @@ export interface AppUser {
   role: UserRole | null;
   company_name: string | null;
   nip: string | null;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  languages: string[];
   truck_types: string[];
   preferred_routes: string[];
   created_at: string;
 }
+
+/** Языки, на которых водители и логисты общаются на рынке; код — как в Accept-Language. */
+export const LANGUAGE_OPTIONS: { value: string; label: string }[] = [
+  { value: "pl", label: "Polski" },
+  { value: "en", label: "English" },
+  { value: "de", label: "Deutsch" },
+  { value: "uk", label: "Українська" },
+  { value: "ru", label: "Русский" },
+  { value: "cs", label: "Čeština" },
+];
 
 export type LoadStatus = "active" | "matched" | "taken" | "cancelled" | "expired";
 export type OfferStatus = "active" | "taken" | "cancelled" | "expired";
@@ -112,6 +126,10 @@ export interface MatchView {
     label: string;
     contact: string | null;
     sourceUrl: string | null;
+    /** Имя, фото и e-mail — только после подтверждения пары; до этого null. */
+    person: { name: string | null; avatarUrl: string | null; email: string | null } | null;
+    /** Проверки, которые сервер сделал сам: телефон подтверждён SMS-кодом, фирма — по NIP в GUS. Для FB-объявлений null. */
+    verified: { phone: boolean; company: boolean } | null;
   };
   created_at: string;
 }

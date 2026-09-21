@@ -77,6 +77,20 @@ export const internalOfferSchema = z
   })
   .refine((o) => o.available_to >= o.available_from, { message: "window_reversed", path: ["available_to"] });
 
+/**
+ * Правка профиля. `null` очищает поле, отсутствие поля не меняет его.
+ * Название компании из GUS (по NIP) вручную не правится — его выставляет сервер.
+ */
+export const profileUpdateSchema = z.object({
+  full_name: z.string().trim().min(2).max(80).nullable().optional(),
+  email: z.string().trim().email().max(254).nullable().optional(),
+  company_name: z.string().trim().min(2).max(120).nullable().optional(),
+  nip: z.string().regex(/^\d{10}$/).nullable().optional(),
+  languages: z.array(z.enum(["pl", "en", "de", "uk", "ru", "cs"])).max(6).optional(),
+  truck_types: z.array(token).max(10).optional(),
+  preferred_routes: z.array(regionCode).max(40).optional(),
+});
+
 export const matchActionSchema = z.object({ action: z.enum(["request", "confirm", "decline"]) });
 
 /** Груз/предложение живёт до конца следующего за датой дня — чтобы окно ±1 день ещё работало. */

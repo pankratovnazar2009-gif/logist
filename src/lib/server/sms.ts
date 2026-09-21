@@ -1,11 +1,13 @@
+import { toSmsSafe } from "../sms-text";
 import { getEnv } from "./env";
 
 /** Единая точка отправки SMS; провайдер выбирается через SMS_PROVIDER=smsapi|twilio. */
 export async function sendSms(toPhone: string, message: string): Promise<void> {
+  const text = toSmsSafe(message);
   if (getEnv().SMS_PROVIDER === "twilio") {
-    await sendViaTwilio(toPhone, message);
+    await sendViaTwilio(toPhone, text);
   } else {
-    await sendViaSmsapi(toPhone, message);
+    await sendViaSmsapi(toPhone, text);
   }
 }
 

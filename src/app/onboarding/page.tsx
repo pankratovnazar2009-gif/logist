@@ -182,18 +182,7 @@ function CarrierProfileForm({ onDone, onBack }: { onDone: () => void; onBack: ()
 
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="badge"
-      style={{
-        background: active ? "var(--color-accent)" : "var(--color-surface-muted)",
-        color: active ? "var(--color-on-accent)" : "var(--color-text-muted)",
-        fontFamily: "var(--font-body)",
-        padding: "6px 12px",
-        cursor: "pointer",
-      }}
-    >
+    <button type="button" onClick={onClick} className="chip" aria-pressed={active}>
       {label}
     </button>
   );
