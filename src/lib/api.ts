@@ -46,7 +46,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new ApiError(res.status, body.error ?? "unknown_error");
-  return body as T;
+  return withProfileDefaults(body) as T;
+}
+
+/**
+ * Пока миграция 0003 не выполнена, у пользователя из БД нет полей профиля. Подставляем пустые значения,
+ * чтобы экран профиля открывался (а не падал), а сохранение честно сообщало об ошибке.
+ */
+function withProfileDefaults(body: unknown): unknown {
+  if (!body || typeof body !== "object" || !("user" in body)) return body;
+  const user = (body as { user: unknown }).user;
+  if (!user || typeof user !== "object") return body;
+  const u = user as Record<string, unknown>;
+  return { ...body, user: { ...u, full_name: u.full_name ?? null, email: u.email ?? null, avatar_url: u.avatar_url ?? null, languages: u.languages ?? [] } };
 }
 
 export const api = {
