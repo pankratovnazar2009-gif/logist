@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { useI18n } from "@/lib/i18n/provider";
+import type { Messages } from "@/lib/i18n/messages";
 import { homePath } from "@/lib/routes";
 import { Wordmark } from "@/components/wordmark";
 
@@ -22,6 +24,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const { loginWithToken } = useAuth();
+  const { m } = useI18n();
   const router = useRouter();
 
   async function handleRequestCode(e: React.FormEvent) {
@@ -32,7 +35,7 @@ export default function LoginPage() {
       await api.requestOtp(phone.trim());
       setStep("code");
     } catch (err) {
-      setError(describeError(err, "request"));
+      setError(describeError(err, "request", m));
     } finally {
       setSubmitting(false);
     }
@@ -47,7 +50,7 @@ export default function LoginPage() {
       loginWithToken(token, user);
       router.replace(user.role ? (returnPath() ?? homePath(user.role)) : "/onboarding");
     } catch (err) {
-      setError(describeError(err, "verify"));
+      setError(describeError(err, "verify", m));
     } finally {
       setSubmitting(false);
     }
@@ -59,13 +62,13 @@ export default function LoginPage() {
         <h1 className="text-3xl mb-1">
           <Wordmark />
         </h1>
-        <p className="text-[var(--color-text-muted)] mb-8">Zaloguj się kodem SMS</p>
+        <p className="text-[var(--color-text-muted)] mb-8">{m.auth.tagline}</p>
 
         {step === "phone" && (
           <form onSubmit={handleRequestCode} className="card flex flex-col gap-4">
             <div>
               <label className="field-label" htmlFor="phone">
-                Numer telefonu
+                {m.auth.phone}
               </label>
               <input
                 id="phone"
@@ -80,7 +83,7 @@ export default function LoginPage() {
             </div>
             {error && <p className="text-sm" style={{ color: "var(--color-danger)" }}>{error}</p>}
             <button className="btn btn-primary" type="submit" disabled={submitting}>
-              {submitting ? "Wysyłanie…" : "Wyślij kod"}
+              {submitting ? m.auth.sending : m.auth.sendCode}
             </button>
           </form>
         )}
@@ -88,11 +91,11 @@ export default function LoginPage() {
         {step === "code" && (
           <form onSubmit={handleVerifyCode} className="card flex flex-col gap-4">
             <p className="text-sm text-[var(--color-text-muted)]">
-              Kod wysłany na <span className="mono">{phone}</span>
+              {m.auth.codeSentTo} <span className="mono">{phone}</span>
             </p>
             <div>
               <label className="field-label" htmlFor="code">
-                Kod z SMS
+                {m.auth.codeLabel}
               </label>
               <input
                 id="code"
@@ -108,7 +111,7 @@ export default function LoginPage() {
             </div>
             {error && <p className="text-sm" style={{ color: "var(--color-danger)" }}>{error}</p>}
             <button className="btn btn-primary" type="submit" disabled={submitting || code.length !== 6}>
-              {submitting ? "Sprawdzanie…" : "Potwierdź"}
+              {submitting ? m.auth.checking : m.auth.confirm}
             </button>
             <button
               type="button"
@@ -119,7 +122,7 @@ export default function LoginPage() {
                 setError(null);
               }}
             >
-              Zmień numer
+              {m.auth.changeNumber}
             </button>
           </form>
         )}
@@ -128,15 +131,11 @@ export default function LoginPage() {
   );
 }
 
-function describeError(err: unknown, context: "request" | "verify"): string {
-  if (err instanceof ApiError) {
-    if (err.code === "invalid_phone") return "Nieprawidłowy numer telefonu.";
-    if (err.code === "too_many_requests") return "Poczekaj chwilę przed ponownym wysłaniem kodu.";
-    if (err.code === "sms_send_failed") return "Nie udało się wysłać SMS. Spróbuj ponownie.";
-    if (err.code === "no_pending_code") return "Poproś o nowy kod.";
-    if (err.code === "code_expired") return "Kod wygasł, poproś o nowy.";
-    if (err.code === "wrong_code") return "Nieprawidłowy kod.";
-    if (err.code === "too_many_attempts") return "Zbyt wiele prób, poproś o nowy kod.";
-  }
-  return context === "request" ? "Nie udało się wysłać kodu." : "Nie udało się zweryfikować kodu.";
+const KNOWN_ERRORS = ["invalid_phone", "too_many_requests", "sms_send_failed", "no_pending_code", "code_expired", "wrong_code", "too_many_attempts"] as const;
+type KnownError = (typeof KNOWN_ERRORS)[number];
+const isKnownError = (code: string): code is KnownError => (KNOWN_ERRORS as readonly string[]).includes(code);
+
+function describeError(err: unknown, context: "request" | "verify", m: Messages): string {
+  if (err instanceof ApiError && isKnownError(err.code)) return m.auth.errors[err.code];
+  return m.auth.errors[context];
 }

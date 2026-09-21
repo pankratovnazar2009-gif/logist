@@ -44,6 +44,35 @@
   --duration-layout: 380ms;
 
   --shadow-elevated: 0 2px 24px -4px rgb(16 24 46 / 0.12);
+  --color-border-strong: #c3ccdb;
+  color-scheme: light;
+}
+
+/* Тёмная тема: те же имена токенов — компоненты не меняются. Акцент светлее, чтобы читаться на тёмном фоне,
+   поэтому текст на акценте (--color-on-accent) здесь тёмный. Тему ставит атрибут data-theme на <html>. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #0d111a;
+  --color-surface: #151a26;
+  --color-surface-muted: #1d2333;
+  --color-border: #283044;
+  --color-border-strong: #3a4562;
+  --color-text: #e9edf6;
+  --color-text-muted: #9ba5bb;
+
+  --color-accent: #6b8ff5;
+  --color-accent-hover: #8ba8f8;
+  --color-accent-soft: #1b2647;
+  --color-on-accent: #0b1020;
+
+  --color-success: #4cc38a;
+  --color-success-soft: #12291f;
+  --color-danger: #f28b82;
+  --color-danger-soft: #33191a;
+  --color-warning: #e5b84a;
+  --color-warning-soft: #2e2410;
+
+  --shadow-elevated: 0 2px 24px -4px rgb(0 0 0 / 0.5);
 }
 
 @theme inline {
@@ -163,7 +192,7 @@ body {
     color: var(--color-text-muted);
   }
   .input:hover {
-    border-color: #c3ccdb;
+    border-color: var(--color-border-strong);
   }
   .input:focus-visible,
   .input:focus {
@@ -275,10 +304,69 @@ body {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
   }
-  .chip[aria-pressed="true"] {
+  .chip[aria-pressed="true"],
+  .chip[aria-checked="true"] {
     background: var(--color-accent);
     border-color: var(--color-accent);
     color: var(--color-on-accent);
+  }
+
+  /* Кнопка-аватар в шапке: кольцо при наведении и фокусе с клавиатуры. */
+  .avatar-trigger {
+    display: inline-flex;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: box-shadow var(--duration-micro) var(--ease-standard), transform var(--duration-micro) var(--ease-standard);
+  }
+  .avatar-trigger:hover {
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+  }
+  .avatar-trigger:active {
+    transform: scale(0.96);
+  }
+  .avatar-trigger:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Меню пользователя: всплывающая панель под аватаром. */
+  .menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + var(--space-2));
+    z-index: 20;
+    min-width: 200px;
+    padding: var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-elevated);
+  }
+  .menu-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--duration-micro) var(--ease-standard);
+  }
+  .menu-item:hover,
+  .menu-item:focus-visible {
+    background: var(--color-surface-muted);
+    outline: none;
+  }
+  .menu-item:active {
+    background: var(--color-accent-soft);
+  }
+  .menu-separator {
+    height: 1px;
+    margin: var(--space-2) 0;
+    background: var(--color-border);
   }
 
   /* Ссылка навигации в шапке: подчёркивание растёт от края к краю на hover и у текущего раздела. */

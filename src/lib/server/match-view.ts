@@ -89,9 +89,7 @@ async function buildViews(rows: MatchRow[], userId: string, includeInactive: boo
       counterpart: {
         party: counterpartParty,
         source: counterpartSource,
-        label: isFacebook
-          ? counterpartParty === "carrier" ? "Przewoźnik z grupy Facebook" : "Zleceniodawca z grupy Facebook"
-          : counterpartUser?.company_name ?? (counterpartParty === "carrier" ? "Przewoźnik" : "Logist"),
+        company: isFacebook ? null : (counterpartUser?.company_name ?? null),
         contact,
         sourceUrl: isFacebook ? (counterpartParty === "carrier" ? row.offer.source_url : row.load.source_url) : null,
         person:

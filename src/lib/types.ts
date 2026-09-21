@@ -123,7 +123,8 @@ export interface MatchView {
   counterpart: {
     party: import("./match-state").Party;
     source: LoadSource;
-    label: string;
+    /** Название компании из GUS (только для участников из приложения); подпись на нужном языке собирает интерфейс. */
+    company: string | null;
     contact: string | null;
     sourceUrl: string | null;
     /** Имя, фото и e-mail — только после подтверждения пары; до этого null. */
@@ -134,43 +135,12 @@ export interface MatchView {
   created_at: string;
 }
 
-export const TRUCK_TYPES: { value: string; label: string }[] = [
-  { value: "firanka", label: "Firanka" },
-  { value: "chlodnia", label: "Chłodnia" },
-  { value: "bus", label: "Bus" },
-  { value: "plandeka", label: "Plandeka" },
-];
+/** Коды регионов Польши и стран, между которыми возят грузы. Код — то, по чему сравнивает подбор; подписи берутся из выбранного языка. */
+export const REGION_CODES = [
+  "PL-MZ", "PL-MA", "PL-WP", "PL-DS", "PL-LD", "PL-PM", "PL-SL", "PL-LU", "PL-PK", "PL-PD", "PL-ZP", "PL-LB", "PL-KP", "PL-WM", "PL-SK", "PL-OP",
+  "DE", "FR", "NL", "CZ", "SK", "AT", "BE", "IT", "ES", "LT", "DK", "SE", "HU", "GB",
+] as const;
+export type RegionCode = (typeof REGION_CODES)[number];
 
-/** Регионы Польши и страны, между которыми возят грузы. Код — то, по чему сравнивает подбор. */
-export const ROUTE_OPTIONS: { value: string; label: string }[] = [
-  { value: "PL-MZ", label: "Mazowieckie" },
-  { value: "PL-MA", label: "Małopolskie" },
-  { value: "PL-WP", label: "Wielkopolskie" },
-  { value: "PL-DS", label: "Dolnośląskie" },
-  { value: "PL-LD", label: "Łódzkie" },
-  { value: "PL-PM", label: "Pomorskie" },
-  { value: "PL-SL", label: "Śląskie" },
-  { value: "PL-LU", label: "Lubelskie" },
-  { value: "PL-PK", label: "Podkarpackie" },
-  { value: "PL-PD", label: "Podlaskie" },
-  { value: "PL-ZP", label: "Zachodniopomorskie" },
-  { value: "PL-LB", label: "Lubuskie" },
-  { value: "PL-KP", label: "Kujawsko-pomorskie" },
-  { value: "PL-WM", label: "Warmińsko-mazurskie" },
-  { value: "PL-SK", label: "Świętokrzyskie" },
-  { value: "PL-OP", label: "Opolskie" },
-  { value: "DE", label: "Niemcy" },
-  { value: "FR", label: "Francja" },
-  { value: "NL", label: "Holandia" },
-  { value: "CZ", label: "Czechy" },
-  { value: "SK", label: "Słowacja" },
-  { value: "AT", label: "Austria" },
-  { value: "BE", label: "Belgia" },
-  { value: "IT", label: "Włochy" },
-  { value: "ES", label: "Hiszpania" },
-  { value: "LT", label: "Litwa" },
-  { value: "DK", label: "Dania" },
-  { value: "SE", label: "Szwecja" },
-  { value: "HU", label: "Węgry" },
-  { value: "GB", label: "Wielka Brytania" },
-];
+export const TRUCK_VALUES = ["firanka", "chlodnia", "bus", "plandeka"] as const;
+export type TruckValue = (typeof TRUCK_VALUES)[number];

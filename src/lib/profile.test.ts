@@ -19,17 +19,17 @@ test("у перевозчика в расчёт входят кузов и на�
   const carrier = { ...empty, role: "carrier" as const, full_name: "Jan Kowalski" };
   const result = profileCompleteness(carrier);
   assert.equal(result.missing.length, 6);
-  assert.ok(result.missing.includes("typ nadwozia") && result.missing.includes("kierunki"));
+  assert.ok(result.missing.includes("trucks") && result.missing.includes("routes"));
 });
 
 test("название компании без NIP тоже считается за «фирма»", () => {
-  assert.equal(profileCompleteness({ ...empty, company_name: "Trans-Bud" }).missing.includes("firma"), false);
+  assert.equal(profileCompleteness({ ...empty, company_name: "Trans-Bud" }).missing.includes("company"), false);
 });
 
-test("инициалы: два слова, одно слово, пусто, лишние пробелы", () => {
+test("инициалы: два слова, одно слово, пусто (значит — силуэт), лишние пробелы", () => {
   assert.equal(initials("Jan Kowalski"), "JK");
   assert.equal(initials("  anna   maria  nowak "), "AN");
   assert.equal(initials("Madonna"), "M");
-  assert.equal(initials(null), "?");
-  assert.equal(initials("   "), "?");
+  assert.equal(initials(null), "");
+  assert.equal(initials("   "), "");
 });

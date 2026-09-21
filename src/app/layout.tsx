@@ -2,10 +2,13 @@ import type { Metadata, Viewport } from "next";
 import { Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { I18nProvider } from "@/lib/i18n/provider";
+import { THEME_INIT_SCRIPT, ThemeProvider } from "@/lib/theme";
 import { RegisterServiceWorker } from "@/components/register-sw";
 
-const manrope = Manrope({ subsets: ["latin", "latin-ext"], variable: "--font-manrope" });
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains-mono" });
+// Кириллица нужна для русского и украинского интерфейса: без неё браузер подставит запасной шрифт.
+const manrope = Manrope({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-manrope" });
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-jetbrains-mono" });
 
 export const metadata: Metadata = {
   title: "Pozna.logist",
@@ -23,14 +26,25 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#1d4fd6",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#1d4fd6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d111a" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pl" className={`${manrope.variable} ${jetbrainsMono.variable}`}>
+    // suppressHydrationWarning: скрипт ниже ставит data-theme до гидратации, и атрибут отличается от серверного HTML.
+    <html lang="pl" className={`${manrope.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-screen antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <ThemeProvider>
+          <I18nProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </I18nProvider>
+        </ThemeProvider>
         <RegisterServiceWorker />
       </body>
     </html>

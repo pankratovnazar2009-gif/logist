@@ -2,20 +2,16 @@
 
 import { useState } from "react";
 import { ApiError, api } from "@/lib/api";
+import { useI18n } from "@/lib/i18n/provider";
+import type { Messages } from "@/lib/i18n/messages";
 import type { MatchAction } from "@/lib/match-state";
 import type { MatchView } from "@/lib/types";
 
-const ERROR_TEXT: Record<string, string> = {
-  closed: "Ta para jest już zamknięta — ktoś był szybszy albo ogłoszenie wygasło.",
-  invalid_state: "Stan się zmienił. Odświeżyłem widok.",
-  forbidden: "Brak dostępu do tego dopasowania.",
-};
-
-function labelFor(action: MatchAction, match: MatchView): string {
-  if (action === "request") return "Poproś o kontakt";
-  if (action === "confirm") return "Potwierdź i odblokuj kontakt";
-  if (match.state.status === "requested" && match.state.by === match.viewer) return "Wycofaj prośbę";
-  return match.state.status === "requested" ? "Odrzuć" : "Nie pasuje";
+function labelFor(action: MatchAction, match: MatchView, m: Messages): string {
+  if (action === "request") return m.match.actions.request;
+  if (action === "confirm") return m.match.actions.confirm;
+  if (match.state.status === "requested" && match.state.by === match.viewer) return m.match.actions.withdraw;
+  return match.state.status === "requested" ? m.match.actions.reject : m.match.actions.notFit;
 }
 
 interface Props {
@@ -28,6 +24,7 @@ interface Props {
 
 /** Кнопки действий. Пока запрос идёт, все кнопки заблокированы — двойной клик не отправит действие дважды. */
 export function MatchActions({ match, onChange, onStale }: Props) {
+  const { m } = useI18n();
   const [pending, setPending] = useState<MatchAction | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +37,8 @@ export function MatchActions({ match, onChange, onStale }: Props) {
       onChange((await api.matchAction(match.id, action)).match);
     } catch (err) {
       const code = err instanceof ApiError ? err.code : "unknown";
-      setError(ERROR_TEXT[code] ?? "Nie udało się wykonać akcji. Spróbuj ponownie.");
+      const known = m.match.actionErrors;
+      setError(code === "closed" || code === "invalid_state" || code === "forbidden" ? known[code] : known.generic);
       if (code === "closed" || code === "invalid_state") onStale();
     } finally {
       setPending(null);
@@ -58,7 +56,7 @@ export function MatchActions({ match, onChange, onStale }: Props) {
             disabled={pending !== null}
             onClick={() => run(action)}
           >
-            {pending === action ? "Chwila…" : labelFor(action, match)}
+            {pending === action ? m.common.working : labelFor(action, match, m)}
           </button>
         ))}
       </div>

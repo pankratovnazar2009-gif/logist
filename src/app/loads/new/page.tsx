@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { useI18n } from "@/lib/i18n/provider";
 import { useRoleGuard } from "@/lib/use-role-guard";
 import { AppShell } from "@/components/app-shell";
 import { Field, RegionSelect, TruckSelect, todayIso, toOptionalInt } from "@/components/form-fields";
@@ -10,6 +11,8 @@ import { Field, RegionSelect, TruckSelect, todayIso, toOptionalInt } from "@/com
 export default function NewLoadPage() {
   const user = useRoleGuard("logist");
   const router = useRouter();
+  const { m } = useI18n();
+  const f = m.loads.form;
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [originRegion, setOriginRegion] = useState("");
@@ -45,53 +48,51 @@ export default function NewLoadPage() {
       });
       router.replace(`/loads/${load.id}`);
     } catch {
-      setError("Nie udało się dodać ładunku. Sprawdź dane i spróbuj ponownie.");
+      setError(f.error);
       setSubmitting(false);
     }
   }
 
   return (
     <AppShell>
-      <h1 className="font-[family-name:var(--font-display)] text-2xl font-extrabold tracking-tight mb-2">Nowy ładunek</h1>
-      <p className="text-[var(--color-text-muted)] mb-6 max-w-lg">
-        Podaj trasę i termin — od razu pokażemy przewoźników, którzy jadą w tę stronę (z aplikacji i z grup na Facebooku).
-      </p>
+      <h1 className="font-[family-name:var(--font-display)] text-2xl font-extrabold tracking-tight mb-2">{f.title}</h1>
+      <p className="text-[var(--color-text-muted)] mb-6 max-w-lg">{f.intro}</p>
       <form onSubmit={handleSubmit} className="card flex flex-col gap-4 max-w-lg">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field id="origin" label="Skąd (miejscowość)">
+          <Field id="origin" label={f.from}>
             <input id="origin" className="input" value={origin} onChange={(e) => setOrigin(e.target.value)} required />
           </Field>
-          <Field id="originRegion" label="Region załadunku" hint="Po nim szukamy przewoźnika.">
-            <RegionSelect id="originRegion" value={originRegion} onChange={setOriginRegion} required placeholder="Wybierz…" />
+          <Field id="originRegion" label={f.fromRegion} hint={f.fromRegionHint}>
+            <RegionSelect id="originRegion" value={originRegion} onChange={setOriginRegion} required placeholder={m.common.choose} />
           </Field>
-          <Field id="destination" label="Dokąd (miejscowość)">
+          <Field id="destination" label={f.to}>
             <input id="destination" className="input" value={destination} onChange={(e) => setDestination(e.target.value)} required />
           </Field>
-          <Field id="destinationRegion" label="Region rozładunku">
-            <RegionSelect id="destinationRegion" value={destinationRegion} onChange={setDestinationRegion} placeholder="Dowolny" />
+          <Field id="destinationRegion" label={f.toRegion}>
+            <RegionSelect id="destinationRegion" value={destinationRegion} onChange={setDestinationRegion} placeholder={m.common.any} />
           </Field>
         </div>
 
-        <Field id="pickupDate" label="Data załadunku" hint="Szukamy przewoźników wolnych w tym dniu ±1 dzień.">
+        <Field id="pickupDate" label={f.date} hint={f.dateHint}>
           <input id="pickupDate" type="date" className="input mono" min={todayIso()} value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} required />
         </Field>
 
-        <Field id="cargo" label="Towar">
-          <input id="cargo" className="input" placeholder="np. palety z częściami" value={cargo} onChange={(e) => setCargo(e.target.value)} />
+        <Field id="cargo" label={f.cargo}>
+          <input id="cargo" className="input" placeholder={f.cargoPlaceholder} value={cargo} onChange={(e) => setCargo(e.target.value)} />
         </Field>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field id="weight" label="Waga (kg)">
+          <Field id="weight" label={f.weight}>
             <input id="weight" className="input mono" inputMode="numeric" value={weight} onChange={(e) => setWeight(e.target.value.replace(/\D/g, ""))} />
           </Field>
-          <Field id="pallets" label="Liczba palet">
+          <Field id="pallets" label={f.pallets}>
             <input id="pallets" className="input mono" inputMode="numeric" value={pallets} onChange={(e) => setPallets(e.target.value.replace(/\D/g, ""))} />
           </Field>
-          <Field id="truckRequired" label="Wymagane nadwozie">
-            <TruckSelect id="truckRequired" value={truckRequired} onChange={setTruckRequired} placeholder="Dowolne" />
+          <Field id="truckRequired" label={f.body}>
+            <TruckSelect id="truckRequired" value={truckRequired} onChange={setTruckRequired} placeholder={m.common.anyNeuter} />
           </Field>
-          <Field id="price" label="Stawka">
-            <input id="price" className="input mono" placeholder="np. 1200 PLN" value={price} onChange={(e) => setPrice(e.target.value)} />
+          <Field id="price" label={f.rate}>
+            <input id="price" className="input mono" placeholder={f.ratePlaceholder} value={price} onChange={(e) => setPrice(e.target.value)} />
           </Field>
         </div>
 
@@ -99,7 +100,7 @@ export default function NewLoadPage() {
           {error}
         </p>
         <button type="submit" className="btn btn-primary" disabled={submitting}>
-          {submitting ? "Dodawanie…" : "Dodaj ładunek i szukaj przewoźnika"}
+          {submitting ? f.submitting : f.submit}
         </button>
       </form>
     </AppShell>

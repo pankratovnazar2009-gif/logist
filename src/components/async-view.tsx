@@ -1,3 +1,6 @@
+"use client";
+
+import { useI18n } from "@/lib/i18n/provider";
 import type { AsyncState } from "@/lib/use-async";
 
 interface AsyncViewProps<T> {
@@ -11,10 +14,12 @@ interface AsyncViewProps<T> {
 
 /** Единое место для четырёх состояний экрана: загрузка, ошибка (с повтором), пусто, данные. */
 export function AsyncView<T>({ state, isEmpty, empty, children, onRetry }: AsyncViewProps<T>) {
+  const { m } = useI18n();
+
   if (state.status === "loading") {
     return (
       <p role="status" className="text-[var(--color-text-muted)]">
-        Ładowanie…
+        {m.common.loading}
       </p>
     );
   }
@@ -24,7 +29,7 @@ export function AsyncView<T>({ state, isEmpty, empty, children, onRetry }: Async
         <p style={{ color: "var(--color-danger)" }}>{state.message}</p>
         {onRetry && (
           <button type="button" className="btn btn-secondary" onClick={onRetry}>
-            Spróbuj ponownie
+            {m.common.retry}
           </button>
         )}
       </div>

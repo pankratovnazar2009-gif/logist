@@ -1,4 +1,7 @@
-import { ROUTE_OPTIONS, TRUCK_TYPES } from "@/lib/types";
+"use client";
+
+import { useI18n } from "@/lib/i18n/provider";
+import { regionOptions, truckOptions } from "@/lib/i18n/options";
 
 interface FieldProps {
   id: string;
@@ -37,32 +40,39 @@ interface SelectProps {
 }
 
 export function RegionSelect({ id, value, onChange, required, placeholder }: SelectProps) {
+  const { m } = useI18n();
+  const options = regionOptions(m);
   return (
     <select id={id} className="input" value={value} onChange={(e) => onChange(e.target.value)} required={required}>
       {placeholder !== undefined && <option value="">{placeholder}</option>}
-      <optgroup label="Polska">
-        {ROUTE_OPTIONS.filter((r) => r.value.startsWith("PL-")).map((r) => (
-          <option key={r.value} value={r.value}>
-            {r.label}
-          </option>
-        ))}
+      <optgroup label={m.regionGroups.poland}>
+        {options
+          .filter((r) => r.value.startsWith("PL-"))
+          .map((r) => (
+            <option key={r.value} value={r.value}>
+              {r.label}
+            </option>
+          ))}
       </optgroup>
-      <optgroup label="Zagranica">
-        {ROUTE_OPTIONS.filter((r) => !r.value.startsWith("PL-")).map((r) => (
-          <option key={r.value} value={r.value}>
-            {r.label}
-          </option>
-        ))}
+      <optgroup label={m.regionGroups.abroad}>
+        {options
+          .filter((r) => !r.value.startsWith("PL-"))
+          .map((r) => (
+            <option key={r.value} value={r.value}>
+              {r.label}
+            </option>
+          ))}
       </optgroup>
     </select>
   );
 }
 
 export function TruckSelect({ id, value, onChange, required, placeholder }: SelectProps) {
+  const { m } = useI18n();
   return (
     <select id={id} className="input" value={value} onChange={(e) => onChange(e.target.value)} required={required}>
       {placeholder !== undefined && <option value="">{placeholder}</option>}
-      {TRUCK_TYPES.map((t) => (
+      {truckOptions(m).map((t) => (
         <option key={t.value} value={t.value}>
           {t.label}
         </option>

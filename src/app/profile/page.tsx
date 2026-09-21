@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { useI18n } from "@/lib/i18n/provider";
 import { profileCompleteness } from "@/lib/profile";
 import { useRoleGuard } from "@/lib/use-role-guard";
 import { AppShell } from "@/components/app-shell";
@@ -10,8 +9,7 @@ import { ProfileForm } from "@/components/profile/profile-form";
 
 export default function ProfilePage() {
   const user = useRoleGuard();
-  const { logout } = useAuth();
-  const router = useRouter();
+  const { m } = useI18n();
   if (!user) return null;
 
   const { percent, missing } = profileCompleteness(user);
@@ -20,12 +18,12 @@ export default function ProfilePage() {
     <AppShell>
       <div className="flex flex-col gap-6 max-w-2xl">
         <div className="flex flex-col gap-4">
-          <h1 className="font-[family-name:var(--font-display)] text-2xl font-extrabold tracking-tight">Twój profil</h1>
+          <h1 className="font-[family-name:var(--font-display)] text-2xl font-extrabold tracking-tight">{m.profile.title}</h1>
           <AvatarUploader user={user} />
           <div className="flex flex-col gap-2">
             <div
               role="progressbar"
-              aria-label="Uzupełnienie profilu"
+              aria-label={m.profile.progress}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={percent}
@@ -35,25 +33,12 @@ export default function ProfilePage() {
               <div className="h-full" style={{ width: `${percent}%`, background: "var(--color-accent)", transition: "width var(--duration-layout) var(--ease-standard)" }} />
             </div>
             <p className="text-sm text-[var(--color-text-muted)]">
-              {missing.length === 0 ? "Profil uzupełniony — druga strona zobaczy komplet danych po potwierdzeniu." : `Uzupełniony w ${percent}%. Brakuje: ${missing.join(", ")}.`}
+              {missing.length === 0 ? m.profile.complete : m.profile.partial(percent, missing.map((key) => m.profile.missing[key]).join(", "))}
             </p>
           </div>
         </div>
 
         <ProfileForm user={user} />
-
-        <div className="border-t border-[var(--color-border)] pt-6">
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => {
-              logout();
-              router.push("/login");
-            }}
-          >
-            Wyloguj
-          </button>
-        </div>
       </div>
     </AppShell>
   );
