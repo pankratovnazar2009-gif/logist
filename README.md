@@ -1,32 +1,42 @@
-# Logist Matchmaker — MVP
+# Logist Matchmaker
 
-Веб-приложение (PWA) для польского рынка TSL: логисты выставляют грузы, перевозчики получают SMS о подходящих
-(по направлению и типу кузова). Пока база пуста — грузы подтягивает парсер из открытых FB-групп.
+Веб-приложение (PWA) для польского рынка TSL. Логист указывает **откуда, куда, когда и какой груз** — приложение сразу
+показывает подходящих перевозчиков: зарегистрированных в приложении и найденных в открытых FB-группах. Перевозчик
+публикует **поездку** («свободен 10–11 октября, еду из Мазовецкого») — и получает подходящие грузы. О новых совпадениях
+приходит SMS **без номера телефона**, только со ссылкой на приложение; контакты открываются после подтверждения.
 
 **Одно приложение = один проект Vercel.** Интерфейс и API — один Next.js в корне репозитория:
 
 ```
-src/app/            — страницы (login, onboarding, loads, loads/[id], loads/new) + PWA-манифест
-src/app/api/        — API (route handlers): вход по SMS, профиль, GUS/NIP, грузы, внутренние вызовы парсера
-src/lib/server/     — серверная логика: Supabase, SMS (SMSAPI.pl/Twilio), GUS, матчинг
-supabase/migrations — схема БД
-parser/             — Python-парсер FB-групп (запускается ОТДЕЛЬНО, не на Vercel — см. ниже)
+src/app/             — страницы: login, onboarding, loads, offers, matches/[id]
+src/app/api/         — API (route handlers): вход по SMS, грузы, поездки, совпадения, внутренние вызовы n8n
+src/lib/             — общие типы и правила подбора (matching-rules.ts + тесты), состояния пары (match-state.ts)
+src/lib/server/      — серверная логика: Supabase, SMS, GUS, подбор, скрытие контактов
+supabase/migrations/ — схема БД (0001_init.sql, 0002_matching.sql)
 ```
+
+## Как работает подбор
+
+Груз и поездка сравниваются по правилам из [src/lib/matching-rules.ts](src/lib/matching-rules.ts):
+
+- регион загрузки должен совпасть; направление сравнивается, если известно с обеих сторон («куда угодно» подходит всем);
+- дата погрузки должна попасть в окно поездки **±1 день** (перевозчик 10–11 → грузы с 9 по 12);
+- кузов должен подходить (firanka ≈ plandeka), вес и паллеты не должны превышать вместимость. Бус не получит 22 тонны.
+  Неизвестное значение пару не исключает.
+
+Пара проходит состояния `pending → requested → confirmed` (или `declined` / `closed`). Подтверждение делает SQL-функция
+`match_apply` одной транзакцией с блокировкой строк: два перевозчика не «возьмут» один груз, двойной клик безопасен.
+Контакт из приложения сервер отдаёт только после подтверждения; контакт из FB-поста публичен и виден сразу.
 
 ## Деплой на Vercel
 
-1. Vercel → **Add New… → Project** → выбери этот репозиторий. Framework определится сам (Next.js),
-   Root Directory оставь пустым. Build/Output настройки не трогай.
-2. До нажатия Deploy добавь **Environment Variables** (список в [.env.example](.env.example)). Обязательные:
-   - `SUPABASE_URL` — Project URL из Supabase (без `/rest/v1/`)
-   - `SUPABASE_SERVICE_ROLE_KEY` — Secret key (`sb_secret_...`)
-   - `APP_JWT_SECRET` — любая длинная случайная строка (≥ 16 символов)
-   - `INTERNAL_API_KEY` — любая случайная строка, тот же секрет пойдёт в парсер
-   - `SMSAPI_TOKEN` — токен SMSAPI.pl (или `SMS_PROVIDER=twilio` + `TWILIO_*`)
-   - `GUS_ENV` = `test` (пока нет своего ключа GUS) или `prod` + `GUS_API_KEY`
-3. Deploy. `APP_BASE_URL` задавать не нужно — ссылки в SMS берутся из домена Vercel (если подключишь
-   свой домен, задай `APP_BASE_URL=https://твой-домен`).
-4. Миграцию БД один раз прогони в Supabase → SQL Editor: [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql).
+1. Vercel → **Add New… → Project** → выбери репозиторий. Framework определится сам (Next.js), Root Directory пустой.
+2. Добавь **Environment Variables** (список — в [.env.example](.env.example)). Обязательные: `SUPABASE_URL`,
+   `SUPABASE_SERVICE_ROLE_KEY`, `APP_JWT_SECRET`, `INTERNAL_API_KEY`, `SMSAPI_TOKEN` (или Twilio), `GUS_ENV`.
+   Проще всего: **Import .env** → файл `.env.vercel`.
+3. Deploy. `APP_BASE_URL` задавать не нужно — ссылки в SMS берутся из домена Vercel.
+4. Миграции БД — **по порядку**, в Supabase → SQL Editor: [0001_init.sql](supabase/migrations/0001_init.sql), затем
+   [0002_matching.sql](supabase/migrations/0002_matching.sql). Вторую нужно выполнить **до** деплоя нового кода.
 
 ## Локальный запуск
 
@@ -34,32 +44,28 @@ parser/             — Python-парсер FB-групп (запускаетс�
 npm install
 copy .env.example .env.local    # впиши реальные значения
 npm run dev                     # http://localhost:3000
+npm test                        # тесты правил подбора
 ```
 
-## Парсер FB-групп (`parser/`)
+## FB-группы через n8n
 
-Python + Playwright + OpenAI. На Vercel он **не запускается** (долгоживущий процесс с браузером и живой
-сессией Facebook) — гоняй его на своём ПК или дешёвом VPS. Он ходит в API задеплоенного приложения:
-в `parser/.env` укажи `BACKEND_URL=https://<твой-проект>.vercel.app` и тот же `INTERNAL_API_KEY`.
+Разбор FB-групп работает в n8n (воркфлоу «Logist App — FB → приложение»), а не в Python-парсере:
 
-```bash
-cd parser
-pip install -r requirements.txt && playwright install chromium
-copy .env.example .env
-python save_session.py    # один раз: логинишься в FB руками, сессия сохраняется в файл
-python main.py
-```
+1. Каждые 15 минут Apify (`facebook-groups-scraper`) отдаёт свежие посты из групп.
+2. Gemini определяет: **груз** / **предложение перевозчика** / мусор, и вытаскивает маршрут, даты, вес, кузов, телефон.
+3. Воркфлоу шлёт результат в приложение: `POST /api/internal/loads` и `POST /api/internal/offers` с заголовком
+   `x-internal-key` (= `INTERNAL_API_KEY`). Дубли приложение отсекает само — по хешу текста поста.
+4. Приложение сразу ищет пары и шлёт SMS зарегистрированным участникам (не больше 10 SMS на одно объявление).
 
-Скрипт никогда сам не проходит логин/капчу/checkpoint Facebook — при проверке он останавливается.
-Список групп лежит в таблице `fb_groups` (сейчас пустая — нужно занести стартовый список).
+Перед включением в n8n: в узле «Отправить в приложение» создай credential (шаблон
+`{"headers":{"x-internal-key":"{{api_key}}"}}`, `api_key` = `INTERNAL_API_KEY` с Vercel) и проверь credential Apify в
+первом узле. Каждый запуск тратит кредиты Apify и Gemini.
 
-## Что уже проверено вживую
-
-Вход по SMS (реальная доставка), GUS-поиск по NIP (тестовый контур), создание грузов, лента, карточка
-груза, фильтрация «перевозчик ↔ груз», PWA (манифест + service worker).
+Папка `parser/` (Python + Playwright) — прежний вариант парсера, сейчас не используется.
 
 ## Не сделано
 
 - Вход через Google (маршрут `/api/auth/google` есть, кнопки во фронтенде нет).
-- Автоматическое «протухание» грузов (`loads.status = 'expired'`; поле `expires_at` уже есть).
-- Заполнение `fb_groups` и запуск парсера в продакшене.
+- Оповещения о новых совпадениях приходят SMS-ом; в самом приложении нет push-уведомлений.
+- Ограничение частоты SMS на одного пользователя (сейчас — не больше 10 SMS на одно новое объявление).
+- Статус `expired` в БД не проставляется фоном: истёкшие объявления скрываются при чтении.

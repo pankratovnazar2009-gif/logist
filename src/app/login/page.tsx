@@ -4,8 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { homePath } from "@/lib/routes";
 
 type Step = "phone" | "code";
+
+/** Куда вернуть после входа (?next=). Только путь внутри приложения — чужой адрес превратил бы форму входа в открытый редирект. */
+function returnPath(): string | null {
+  const next = new URLSearchParams(window.location.search).get("next");
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+}
 
 export default function LoginPage() {
   const [step, setStep] = useState<Step>("phone");
@@ -37,7 +44,7 @@ export default function LoginPage() {
     try {
       const { token, user } = await api.verifyOtp(phone.trim(), code.trim());
       loginWithToken(token, user);
-      router.replace(user.role ? "/loads" : "/onboarding");
+      router.replace(user.role ? (returnPath() ?? homePath(user.role)) : "/onboarding");
     } catch (err) {
       setError(describeError(err, "verify"));
     } finally {

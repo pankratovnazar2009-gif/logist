@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
         <div className="mx-auto max-w-3xl px-4 py-4 flex items-center justify-between">
-          <Link href="/loads" className="font-[family-name:var(--font-display)] text-lg font-extrabold tracking-tight">
+          <Link href="/" className="font-[family-name:var(--font-display)] text-lg font-extrabold tracking-tight">
             Logist<span style={{ color: "var(--color-accent)" }}>.</span>
           </Link>
           <div className="flex items-center gap-3">

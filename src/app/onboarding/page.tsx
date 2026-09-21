@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { api, ApiError } from "@/lib/api";
+import { homePath } from "@/lib/routes";
 import { ROUTE_OPTIONS, TRUCK_TYPES, type UserRole } from "@/lib/types";
 
 export default function OnboardingPage() {
@@ -28,12 +29,12 @@ export default function OnboardingPage() {
         {!role && (
           <div className="grid grid-cols-1 gap-3">
             <RoleCard title="Logist / Spedytor" subtitle="Wystawiam ładunki, szukam przewoźnika" onClick={() => setRole("logist")} />
-            <RoleCard title="Przewoźnik" subtitle="Szukam ładunków, dostaję SMS o dopasowaniach" onClick={() => setRole("carrier")} />
+            <RoleCard title="Przewoźnik" subtitle="Podaję termin i trasę, dostaję SMS o pasujących ładunkach" onClick={() => setRole("carrier")} />
           </div>
         )}
 
-        {role === "logist" && <LogistProfileForm onDone={async () => { await refreshUser(); router.replace("/loads"); }} onBack={() => setRole(null)} />}
-        {role === "carrier" && <CarrierProfileForm onDone={async () => { await refreshUser(); router.replace("/loads"); }} onBack={() => setRole(null)} />}
+        {role === "logist" && <LogistProfileForm onDone={async () => { await refreshUser(); router.replace(homePath("logist")); }} onBack={() => setRole(null)} />}
+        {role === "carrier" && <CarrierProfileForm onDone={async () => { await refreshUser(); router.replace(homePath("carrier")); }} onBack={() => setRole(null)} />}
       </div>
     </div>
   );

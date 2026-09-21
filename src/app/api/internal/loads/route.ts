@@ -1,23 +1,14 @@
-import { z } from "zod";
+import { after } from "next/server";
+import { createHash } from "node:crypto";
 import { db } from "@/lib/server/db";
 import { isInternalRequest, json, unauthorized } from "@/lib/server/http";
-import { matchAndNotifyForLoad } from "@/lib/server/matching";
-
-const internalLoadSchema = z.object({
-  origin: z.string().nullable().optional(),
-  destination: z.string().nullable().optional(),
-  origin_region: z.string().nullable().optional(),
-  destination_region: z.string().nullable().optional(),
-  truck_required: z.string().nullable().optional(),
-  price: z.string().nullable().optional(),
-  contact_info: z.string().nullable().optional(),
-  raw_text: z.string(),
-  raw_text_hash: z.string().length(64),
-});
+import { createMatchesForLoad } from "@/lib/server/matching";
+import { sendMatchNotifications } from "@/lib/server/notifications";
+import { expiresAtFor, internalLoadSchema } from "@/lib/server/schemas";
 
 /**
- * POST /api/internal/loads — вызывается Python-парсером после структуризации поста LLM.
- * Защищено общим секретом (x-internal-key). Дедупликация — по raw_text_hash (уникальный индекс).
+ * POST /api/internal/loads — вызывается воркфлоу n8n после разбора FB-поста нейросетью.
+ * Защищено общим секретом (x-internal-key). Дедупликация — по sha256 текста (уникальный индекс).
  */
 export async function POST(req: Request) {
   if (!isInternalRequest(req)) return unauthorized();
@@ -25,9 +16,12 @@ export async function POST(req: Request) {
   const parsed = internalLoadSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return json({ error: "invalid_input", details: parsed.error.flatten() }, 400);
 
+  const raw_text_hash = createHash("sha256").update(parsed.data.raw_text.trim()).digest("hex");
+  const expires_at = parsed.data.pickup_date ? expiresAtFor(parsed.data.pickup_date) : undefined; // без даты — срок по умолчанию (48 ч)
+
   const { data: load, error } = await db()
     .from("loads")
-    .insert({ ...parsed.data, source: "facebook" })
+    .insert({ ...parsed.data, raw_text_hash, ...(expires_at ? { expires_at } : {}), source: "facebook" })
     .select("*")
     .maybeSingle();
 
@@ -39,10 +33,11 @@ export async function POST(req: Request) {
   }
   if (!load) return json({ inserted: false, reason: "duplicate" });
 
-  const { notified } = await matchAndNotifyForLoad(load.id).catch((err) => {
-    console.error("matchAndNotifyForLoad failed", err);
-    return { notified: 0 };
+  const notifications = await createMatchesForLoad(load.id).catch((err) => {
+    console.error("createMatchesForLoad failed", err);
+    return [];
   });
+  after(() => sendMatchNotifications(notifications));
 
-  return json({ inserted: true, load, notified }, 201);
+  return json({ inserted: true, id: load.id, matches: notifications.length }, 201);
 }

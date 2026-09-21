@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { homePath } from "@/lib/routes";
 
 export default function RootPage() {
   const { user, loading } = useAuth();
@@ -15,7 +16,7 @@ export default function RootPage() {
     } else if (!user.role) {
       router.replace("/onboarding");
     } else {
-      router.replace("/loads");
+      router.replace(homePath(user.role));
     }
   }, [loading, user, router]);
 

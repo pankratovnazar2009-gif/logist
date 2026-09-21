@@ -52,15 +52,23 @@ export const api = {
     request<{ user: import("./types").AppUser }>("/api/users/me/profile", { method: "POST", body: JSON.stringify(payload) }),
   lookupNip: (nip: string) =>
     request<{ company: { name: string; regon: string; city: string | null; street: string | null } }>(`/api/nip/${nip}`),
-  listLoads: () => request<{ loads: import("./types").Load[] }>("/api/loads"),
+  listLoads: () => request<{ loads: import("./types").LoadWithCount[] }>("/api/loads"),
   getLoad: (id: string) => request<{ load: import("./types").Load }>(`/api/loads/${id}`),
-  createLoad: (payload: {
-    origin: string;
-    destination: string;
-    origin_region?: string;
-    destination_region?: string;
-    truck_required?: string;
-    price?: string;
-    contact_info?: string;
-  }) => request<{ load: import("./types").Load }>("/api/loads", { method: "POST", body: JSON.stringify(payload) }),
+  createLoad: (payload: import("./types").NewLoadPayload) =>
+    request<{ load: import("./types").Load }>("/api/loads", { method: "POST", body: JSON.stringify(payload) }),
+  cancelLoad: (id: string) => request<{ ok: true }>(`/api/loads/${id}`, { method: "DELETE" }),
+
+  listOffers: () => request<{ offers: import("./types").OfferWithCount[] }>("/api/offers"),
+  getOffer: (id: string) => request<{ offer: import("./types").CarrierOffer }>(`/api/offers/${id}`),
+  createOffer: (payload: import("./types").NewOfferPayload) =>
+    request<{ offer: import("./types").CarrierOffer }>("/api/offers", { method: "POST", body: JSON.stringify(payload) }),
+  cancelOffer: (id: string) => request<{ ok: true }>(`/api/offers/${id}`, { method: "DELETE" }),
+
+  listMatches: (scope: { load?: string; offer?: string } = {}) => {
+    const query = new URLSearchParams(Object.entries(scope).filter((e): e is [string, string] => Boolean(e[1]))).toString();
+    return request<{ matches: import("./types").MatchView[] }>(`/api/matches${query ? `?${query}` : ""}`);
+  },
+  getMatch: (id: string) => request<{ match: import("./types").MatchView }>(`/api/matches/${id}`),
+  matchAction: (id: string, action: import("./match-state").MatchAction) =>
+    request<{ match: import("./types").MatchView }>(`/api/matches/${id}`, { method: "POST", body: JSON.stringify({ action }) }),
 };
