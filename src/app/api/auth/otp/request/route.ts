@@ -1,7 +1,6 @@
 import { randomInt } from "crypto";
 import { z } from "zod";
 import { db } from "@/lib/server/db";
-import { appBaseUrl } from "@/lib/server/env";
 import { json } from "@/lib/server/http";
 import { sendSms } from "@/lib/server/sms";
 
@@ -41,9 +40,10 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Последняя строка «@домен #код» — формат WebOTP: Chrome на Android подставит код в поле сам.
-    const host = new URL(appBaseUrl()).host;
-    await sendSms(phone, `Pozna.logist: Twój kod logowania ${code}. Ważny 5 minut. Nie podawaj go nikomu.\n\n@${host} #${code}`);
+    // Раньше здесь была строка «@домен #код» (формат WebOTP — Chrome сам подставляет код), но SMSAPI.pl
+    // распознаёт «@домен» как ссылку и блокирует всё сообщение целиком (их ошибка 94 «Not allowed to send
+    // messages with link»). Автозаполнение удобнее, но доставка важнее — строку убрали.
+    await sendSms(phone, `Pozna.logist: Twój kod logowania ${code}. Ważny 5 minut. Nie podawaj go nikomu.`);
   } catch (err) {
     console.error("sendSms failed", err);
     // Без этого удаления неудачная попытка сама себе перекрывает повтор: следующий запрос в течение
