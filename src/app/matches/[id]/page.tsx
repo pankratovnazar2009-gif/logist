@@ -13,6 +13,7 @@ import { AppShell } from "@/components/app-shell";
 import { AsyncView } from "@/components/async-view";
 import { Avatar } from "@/components/avatar";
 import { MatchActions } from "@/components/match-actions";
+import { MatchOutcome } from "@/components/match-outcome";
 import { MatchStateBadge, describeState } from "@/components/match-status";
 import { VerifiedBadges } from "@/components/verified-badges";
 
@@ -62,6 +63,7 @@ function MatchDetail({ match, onRefresh }: { match: MatchView; onRefresh: () => 
       </div>
 
       <ContactBlock match={match} />
+      <MatchOutcome match={match} onChange={onRefresh} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="card flex flex-col gap-2">
@@ -88,12 +90,11 @@ function MatchDetail({ match, onRefresh }: { match: MatchView; onRefresh: () => 
   );
 }
 
-/** Контакт показываем только если сервер его прислал: после подтверждения или для публичного объявления из Facebook. */
+/** Контакт показываем только если сервер его прислал — а он присылает его только после подтверждения пары. */
 function ContactBlock({ match }: { match: MatchView }) {
   const { m } = useI18n();
-  const { counterpart, state } = match;
-  const isOpen = state.status === "confirmed" || (counterpart.source === "facebook" && state.status !== "declined" && state.status !== "closed");
-  if (!isOpen || (!counterpart.contact && !counterpart.sourceUrl && !counterpart.person?.email)) return null;
+  const { counterpart } = match;
+  if (!counterpart.contact && !counterpart.sourceUrl && !counterpart.person?.email) return null;
 
   const href = counterpart.contact ? contactHref(counterpart.contact) : null;
   return (

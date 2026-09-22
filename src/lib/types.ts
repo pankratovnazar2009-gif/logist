@@ -120,6 +120,10 @@ export interface MatchView {
   load: LoadSummary;
   offer: OfferSummary;
   actions: import("./match-state").MatchAction[];
+  /** Состоялась ли перевозка — спрашиваем через сутки после подтверждения; строит базу проверенных перевозчиков. */
+  outcome: "unknown" | "completed" | "failed";
+  /** Пара подтверждена и результат ещё не отмечен — самое время показать «состоялось / нет». */
+  canReportOutcome: boolean;
   counterpart: {
     party: import("./match-state").Party;
     source: LoadSource;

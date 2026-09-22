@@ -10,6 +10,7 @@ import type { MatchView } from "@/lib/types";
 function labelFor(action: MatchAction, match: MatchView, m: Messages): string {
   if (action === "request") return m.match.actions.request;
   if (action === "confirm") return m.match.actions.confirm;
+  if (action === "take") return m.match.actions.take;
   if (match.state.status === "requested" && match.state.by === match.viewer) return m.match.actions.withdraw;
   return match.state.status === "requested" ? m.match.actions.reject : m.match.actions.notFit;
 }

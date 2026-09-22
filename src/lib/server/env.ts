@@ -15,6 +15,9 @@ const envSchema = z.object({
   GUS_API_KEY: z.string().default("abcde12345abcde12345"),
   GUS_ENV: z.enum(["test", "prod"]).default("test"),
   APP_BASE_URL: z.string().url().optional(),
+  // Личный телефон владельца: сюда шлём SMS «для груза из FB нашёлся перевозчик» — дальше он сам пишет
+  // заказчику в Facebook. Без этой переменной шаг просто пропускается, остальное приложение работает как есть.
+  OWNER_NOTIFY_PHONE: z.string().optional(),
 });
 
 type Env = z.infer<typeof envSchema>;

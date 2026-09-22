@@ -101,4 +101,6 @@ export const api = {
   getMatch: (id: string) => request<{ match: import("./types").MatchView }>(`/api/matches/${id}`),
   matchAction: (id: string, action: import("./match-state").MatchAction) =>
     request<{ match: import("./types").MatchView }>(`/api/matches/${id}`, { method: "POST", body: JSON.stringify({ action }) }),
+  reportOutcome: (id: string, outcome: "completed" | "failed") =>
+    request<{ match: import("./types").MatchView }>(`/api/matches/${id}/outcome`, { method: "POST", body: JSON.stringify({ outcome }) }),
 };

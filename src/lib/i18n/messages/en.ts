@@ -181,7 +181,7 @@ export const en: Messages = {
     badge: { new: "new", waiting: "waiting for reply", needsAction: "needs your reply", connected: "connected", declined: "declined", closed: "closed" },
     describe: {
       pendingApp: "You can ask for contact. Contact details unlock only after the other side confirms.",
-      pendingFacebook: "A post from a Facebook group — the contact is public, you can act right away.",
+      pendingFacebook: "A load from a Facebook group. Be first — tap \"Take it\" to reserve it for yourself. You'll see the contact right after you tap.",
       requestedByMe: "Request sent. Waiting for the other side to confirm — you will get an SMS.",
       requestedByOther: "The other side wants to connect with you. Confirm to unlock the contact.",
       confirmed: "Connected. The other side's contact is unlocked.",
@@ -195,6 +195,7 @@ export const en: Messages = {
     actions: {
       request: "Ask for contact",
       confirm: "Confirm and unlock contact",
+      take: "Take it",
       withdraw: "Withdraw request",
       reject: "Decline",
       notFit: "Not a fit",
@@ -204,6 +205,14 @@ export const en: Messages = {
       invalid_state: "The state has changed. I refreshed the view.",
       forbidden: "You have no access to this match.",
       generic: "Could not complete the action. Please try again.",
+    },
+    outcome: {
+      question: "Did the transport happen?",
+      completed: "Yes, it happened",
+      failed: "It fell through",
+      thanksCompleted: "Thanks! We saved it in your transport history.",
+      thanksFailed: "Thanks for letting us know.",
+      error: "Could not save. Please try again.",
     },
   },
   cancel: { error: "That did not work. The listing may already be assigned.", yes: "Yes, withdraw", no: "No" },

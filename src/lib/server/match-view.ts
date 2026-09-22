@@ -10,6 +10,7 @@ interface MatchRow {
   closed_reason: string | null;
   score: number;
   created_at: string;
+  outcome: "unknown" | "completed" | "failed";
   load: Load;
   offer: CarrierOffer;
 }
@@ -74,9 +75,11 @@ async function buildViews(rows: MatchRow[], userId: string, includeInactive: boo
     const counterpartRecordContact = counterpartParty === "carrier" ? row.offer.contact_info : row.load.contact_info;
     const counterpartUser = counterpartUserId ? userById.get(counterpartUserId) : undefined;
     const isFacebook = counterpartSource === "facebook";
+    const isConfirmed = state.status === "confirmed";
 
-    // Контакт из приложения раскрываем только после подтверждения; контакт из FB-поста и так публичен.
-    const contact = isFacebook ? counterpartRecordContact : state.status === "confirmed" ? (counterpartRecordContact ?? counterpartUser?.phone ?? null) : null;
+    // Пока пара не подтверждена, о втором участнике ничего не раскрываем — иначе можно обойти очередь
+    // «первый нажавший забирает» и написать заказчику из FB-поста в обход приложения.
+    const contact = isConfirmed ? (counterpartRecordContact ?? counterpartUser?.phone ?? null) : null;
 
     return {
       id: row.id,
@@ -86,16 +89,15 @@ async function buildViews(rows: MatchRow[], userId: string, includeInactive: boo
       load: summarizeLoad(row.load),
       offer: summarizeOffer(row.offer),
       actions: availableActions(state, viewer, Boolean(row.load.logist_id && row.offer.carrier_id)),
+      outcome: row.outcome,
+      canReportOutcome: isConfirmed && row.outcome === "unknown",
       counterpart: {
         party: counterpartParty,
         source: counterpartSource,
         company: isFacebook ? null : (counterpartUser?.company_name ?? null),
         contact,
-        sourceUrl: isFacebook ? (counterpartParty === "carrier" ? row.offer.source_url : row.load.source_url) : null,
-        person:
-          state.status === "confirmed" && counterpartUser
-            ? { name: counterpartUser.full_name, avatarUrl: counterpartUser.avatar_url, email: counterpartUser.email }
-            : null,
+        sourceUrl: isConfirmed && isFacebook ? (counterpartParty === "carrier" ? row.offer.source_url : row.load.source_url) : null,
+        person: isConfirmed && counterpartUser ? { name: counterpartUser.full_name, avatarUrl: counterpartUser.avatar_url, email: counterpartUser.email } : null,
         verified: counterpartUser ? { phone: Boolean(counterpartUser.phone), company: Boolean(counterpartUser.nip) } : null,
       },
       created_at: row.created_at,

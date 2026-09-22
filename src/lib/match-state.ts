@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export type Party = "logist" | "carrier";
 export type ClosedReason = "load_taken" | "offer_taken" | "expired" | "cancelled";
-export type MatchAction = "request" | "confirm" | "decline";
+export type MatchAction = "request" | "confirm" | "decline" | "take";
 
 /** Состояние пары «груз ↔ предложение». Невозможные комбинации (например, «подтверждено» без запроса) не выражаются типом. */
 export type MatchState =
@@ -40,13 +40,14 @@ export function parseMatchState(row: unknown): MatchState {
 }
 
 /**
- * Что может сделать участник. `canConnect` — обе стороны в приложении: если одна из них пришла из Facebook,
- * подтверждать некому, а контакт и так публичен — остаётся только скрыть пару.
+ * Что может сделать участник. `canConnect` — обе стороны в приложении: тогда обычный путь request → confirm.
+ * Если одна сторона пришла из Facebook, подтверждать там некому — вместо этого «take» сразу забирает пару
+ * (первый нажавший выигрывает, остальным закрывает конкурирующие пары бэкенд).
  */
 export function availableActions(state: MatchState, viewer: Party, canConnect: boolean): MatchAction[] {
   switch (state.status) {
     case "pending":
-      return canConnect ? ["request", "decline"] : ["decline"];
+      return canConnect ? ["request", "decline"] : ["take", "decline"];
     case "requested":
       return state.by === viewer ? ["decline"] : ["confirm", "decline"];
     case "confirmed":

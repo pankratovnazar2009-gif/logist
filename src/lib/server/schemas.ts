@@ -91,7 +91,10 @@ export const profileUpdateSchema = z.object({
   preferred_routes: z.array(regionCode).max(40).optional(),
 });
 
-export const matchActionSchema = z.object({ action: z.enum(["request", "confirm", "decline"]) });
+export const matchActionSchema = z.object({ action: z.enum(["request", "confirm", "decline", "take"]) });
+
+/** Ответ на вопрос «состоялась ли перевозка» — задаём через сутки после подтверждения (см. /api/internal/collect-outcomes). */
+export const outcomeSchema = z.object({ outcome: z.enum(["completed", "failed"]) });
 
 /** Груз/предложение живёт до конца следующего за датой дня — чтобы окно ±1 день ещё работало. */
 export const expiresAtFor = (isoDate: string): string => `${addDays(isoDate, 2)}T00:00:00.000Z`;

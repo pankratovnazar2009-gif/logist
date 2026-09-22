@@ -180,7 +180,7 @@ export const pl = {
     badge: { new: "nowe", waiting: "czeka na odpowiedź", needsAction: "wymaga reakcji", connected: "połączono", declined: "odrzucone", closed: "zamknięte" },
     describe: {
       pendingApp: "Możesz poprosić o kontakt. Dane kontaktowe odblokują się dopiero po potwierdzeniu przez drugą stronę.",
-      pendingFacebook: "Ogłoszenie z grupy Facebook — kontakt jest publiczny, możesz działać od razu.",
+      pendingFacebook: "Ładunek z grupy Facebook. Bądź pierwszy — kliknij „Biorę”, żeby zarezerwować go dla siebie. Kontakt zobaczysz od razu po kliknięciu.",
       requestedByMe: "Prośba wysłana. Czekamy na potwierdzenie drugiej strony — dostaniesz SMS.",
       requestedByOther: "Druga strona chce się z Tobą połączyć. Potwierdź, aby odblokować kontakt.",
       confirmed: "Połączono. Kontakt do drugiej strony jest odblokowany.",
@@ -194,6 +194,7 @@ export const pl = {
     actions: {
       request: "Poproś o kontakt",
       confirm: "Potwierdź i odblokuj kontakt",
+      take: "Biorę",
       withdraw: "Wycofaj prośbę",
       reject: "Odrzuć",
       notFit: "Nie pasuje",
@@ -203,6 +204,14 @@ export const pl = {
       invalid_state: "Stan się zmienił. Odświeżyłem widok.",
       forbidden: "Brak dostępu do tego dopasowania.",
       generic: "Nie udało się wykonać akcji. Spróbuj ponownie.",
+    },
+    outcome: {
+      question: "Czy transport się odbył?",
+      completed: "Tak, odbył się",
+      failed: "Nie doszło do skutku",
+      thanksCompleted: "Dzięki! Zapisaliśmy to w Twojej historii przewozów.",
+      thanksFailed: "Dzięki za informację.",
+      error: "Nie udało się zapisać. Spróbuj ponownie.",
     },
   },
   cancel: { error: "Nie udało się. Być może to ogłoszenie zostało już przydzielone.", yes: "Tak, wycofaj", no: "Nie" },
