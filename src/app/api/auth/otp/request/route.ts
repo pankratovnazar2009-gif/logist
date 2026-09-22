@@ -30,12 +30,12 @@ export async function POST(req: Request) {
   }
 
   const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
-  const { error } = await supabase.from("otp_codes").insert({
-    phone,
-    code,
-    expires_at: new Date(Date.now() + OTP_TTL_MS).toISOString(),
-  });
-  if (error) {
+  const { data: inserted, error } = await supabase
+    .from("otp_codes")
+    .insert({ phone, code, expires_at: new Date(Date.now() + OTP_TTL_MS).toISOString() })
+    .select("id")
+    .single();
+  if (error || !inserted) {
     console.error("otp insert failed", error);
     return json({ error: "db_error" }, 500);
   }
@@ -46,6 +46,9 @@ export async function POST(req: Request) {
     await sendSms(phone, `Pozna.logist: Twój kod logowania ${code}. Ważny 5 minut. Nie podawaj go nikomu.\n\n@${host} #${code}`);
   } catch (err) {
     console.error("sendSms failed", err);
+    // Без этого удаления неудачная попытка сама себе перекрывает повтор: следующий запрос в течение
+    // минуты упирался бы в «подождите» вместо настоящей причины (провайдер SMS недоступен/без кредитов).
+    await supabase.from("otp_codes").delete().eq("id", inserted.id);
     return json({ error: "sms_send_failed" }, 502);
   }
 
